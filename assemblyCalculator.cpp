@@ -22,7 +22,7 @@ AssemblyCalculator::AssemblyCalculator(string newOper, string newDest, string fi
 }
 
 // when we have a shift
-AssemblyCalculator::AssemblyCalculator(string newOper, string newDest, string firReg, unsigned int newOperand2){
+AssemblyCalculator::AssemblyCalculator(string newOper, string newDest, string firReg, uint32_t newOperand2){
     currentOperation = newOper;
     destReg = newDest;
     firstReg = firReg;
@@ -30,19 +30,26 @@ AssemblyCalculator::AssemblyCalculator(string newOper, string newDest, string fi
 }
 
 // when we have a move operation
-AssemblyCalculator::AssemblyCalculator(string newOper, string newDest, unsigned int newOperand2){
+AssemblyCalculator::AssemblyCalculator(string newOper, string newDest, uint32_t newOperand2){
     currentOperation = newOper;
     destReg = newDest;
     secondOperand = newOperand2;
 }
 
+// for cmp/tst
+AssemblyCalculator::AssemblyCalculator(string newOper, string firReg, string secReg){
+    currentOperation = newOper;
+    firstReg = firReg;
+    secondReg = secReg;
+}
+
 
 // getters + setters
-void AssemblyCalculator::setSecondOperand(const unsigned int newOperand2){
+void AssemblyCalculator::setSecondOperand(const uint32_t newOperand2){
     secondOperand = newOperand2;
 }
 
-unsigned int AssemblyCalculator::getSecondOperand() const{
+uint32_t AssemblyCalculator::getSecondOperand() const{
     return secondOperand;
 }
 
@@ -90,7 +97,7 @@ void AssemblyCalculator::displayFlagVals(){
     cout << noshowbase << "N = " << N << " Z = " << Z << " C = " << C << " V = " << V << endl;
 }
 
-void AssemblyCalculator::setRegisterVal(int whichRegister, const unsigned int newVal){
+void AssemblyCalculator::setRegisterVal(int whichRegister, const uint32_t newVal){
     switch(whichRegister){
         case 0:
             r0 = newVal;
@@ -119,7 +126,7 @@ void AssemblyCalculator::setRegisterVal(int whichRegister, const unsigned int ne
     }
 }
 
-unsigned int AssemblyCalculator::getRegisterVal(int whichRegister) const{
+uint32_t AssemblyCalculator::getRegisterVal(int whichRegister) const{
     switch(whichRegister){
         case 0:
             return r0;
@@ -195,85 +202,193 @@ void AssemblyCalculator::getStartingVals(const AssemblyCalculator& previousCalc)
 
 // performs the current operation - calls the appropiate behavior
 void AssemblyCalculator::performCurrentOperation(){
-    string operation = getCurrentOperation();
+    string operation = getCurrentOperation(), oper;
     int registerNum = destReg.back() - '0';
+    uint32_t result, newResult;
 
     if (operation.back() == 'S' || operation.back() == 's'){ // treat operation as being the operation without the S
-        operation = operation.substr(0, operation.size()-1);
+        oper = operation.substr(0, operation.size()-1);
+    }
+    else{
+        oper = operation;
     }
 
-    if(operation == "ADD" || operation == "add"){  
-        setRegisterVal(registerNum, performADD());
+    if(oper == "ADD" || oper == "add"){  
+        result = performADD();
     }
-    else if(operation == "AND" || operation == "and"){
-        setRegisterVal(registerNum, performAND());
+    else if(oper == "AND" || oper == "and" || oper == "TST" || oper == "tst"){
+        result = performAND();
     }
-    else if(operation == "LSR" || operation == "lsr"){
-        setRegisterVal(registerNum, performLSR());
+    else if(oper == "LSR" || oper == "lsr"){
+        result = performLSR();
     }
-    else if(operation == "LSL" || operation == "lsl"){
-        setRegisterVal(registerNum, performLSL());
+    else if(oper == "LSL" || oper == "lsl"){
+        result = performLSL();
     }
-    else if (operation == "ORR" || operation == "orr"){
-        setRegisterVal(registerNum, performORR());
+    else if (oper == "ORR" || oper == "orr"){
+        result = performORR();
     }
-    else if (operation == "XOR" || operation == "xor"){
-        setRegisterVal(registerNum, performXOR());
+    else if (oper == "XOR" || oper == "xor"){
+        result = performXOR();
     }
-    else if (operation == "SUB" || operation == "sub"){
-        setRegisterVal(registerNum, performSUB());
+    else if (oper == "SUB" || oper == "sub" || oper == "CMP" || oper == "cmp"){
+        result = performSUB();
     }
-    else if (operation == "MOV" || operation == "mov"){
+
+
+    if (oper == "MOV" || oper == "mov"){
         performMOV();
+    }
+    else if(oper !=  "TST" && oper != "tst" && oper != "CMP" && oper != "cmp"){
+        setRegisterVal(registerNum, result);
+    }
+
+
+
+    // if the instruction ends in an S, set the flags
+    if (operation.back() == 'S' || operation.back() == 's' || oper == "CMP" || oper == "cmp" || oper == "TST" || oper == "tst"){
+        bool affectN = false, affectZ = false, affectC = false, affectV = false;
+
+        if(oper == "ADD" || oper == "add" || oper == "SUB" || oper == "sub" || oper == "cmp" || oper == "CMP"){
+            affectN = true;
+            affectZ = true;
+            affectC = true;
+            affectV = true;
+        }
+        else if(oper == "AND" || oper == "and" || oper == "orr" || oper == "ORR" || oper == "tst" || oper == "TST" || oper == "XOR" || oper == "xor"){
+            affectN = true;
+            affectZ = true;
+        }
+        else{ // lsr or lsl
+            affectN = true;
+            affectZ = true;
+            affectC = true;
+        }
+
+        if(affectN){
+            // get the MSB
+            newResult = result;
+            while(newResult >= 16){
+                newResult = newResult/16;
+            }
+
+            // set the N flag if the MSB is 1
+            if(newResult > 7){
+                N = 1;
+            }
+            else{
+                N = 0;
+            }
+        }
+
+        if(affectZ){
+            // set the Z flag if result is 0
+            if(result == 0){
+                Z = 1;
+            }
+            else{
+                Z = 0;
+            }
+        }
+
+        if(affectC){
+            if(oper == "LSL" || oper == "lsl"){
+                if(result < getRegisterVal(firstReg.back() - '0')){
+                    C = 1;
+                }
+                else{
+                    C = 0;
+                }
+            }
+
+             if(oper == "LSR" || oper == "lsr"){
+                if(result < getRegisterVal(firstReg.back() - '0')){
+                    C = 1;
+                }
+                else{
+                    C = 0;
+                }
+            }     
+
+            if(oper == "SUB" || oper == "sub" || oper == "CMP" || oper == "cmp"){
+                if(getRegisterVal(firstReg.back() - '0') > getRegisterVal(secondReg.back() - '0')){
+                    C = 1;
+                }
+                else{
+                    C = 0;
+                }      
+            }
+
+            if(oper == "ADD" || oper == "add"){
+                if(getRegisterVal(firstReg.back() - '0') > result || getRegisterVal(secondReg.back() - '0') > result){
+                    C = 1;
+                }
+                else{
+                    C = 0;
+                }        
+            }      
+        }
+
+        if(affectV){
+            //set the V flag
+            if(oper == "CMP" || oper == "cmp" || oper == "tst" || oper == "TST"){
+                if(C){
+                    V = 0;
+                }
+            }
+            else if(N || C){
+                V = 1;
+            }
+            else{
+                V = 0;
+            }
+        }
     }
 }
 
-unsigned int AssemblyCalculator::performADD(){
+uint32_t AssemblyCalculator::performADD(){
     int firstRegNum = firstReg.back() - '0';
     int secRegNum = secondReg.back() - '0';
 
     return getRegisterVal(firstRegNum) + getRegisterVal(secRegNum);
 }
 
-unsigned int AssemblyCalculator::performAND(){
+uint32_t AssemblyCalculator::performAND(){
     int firstRegNum = firstReg.back() - '0';
     int secRegNum = secondReg.back() - '0';
 
     return getRegisterVal(firstRegNum) & getRegisterVal(secRegNum);
 }
 
-unsigned int AssemblyCalculator::performLSR(){
+uint32_t AssemblyCalculator::performLSR(){
     int firstRegNum = firstReg.back() - '0';
     int numShifts = secondOperand;
-
-    cout << "first register num: " << firstRegNum << endl;
-    cout << "number of shifts: " << numShifts << endl;
 
     return getRegisterVal(firstRegNum) >> numShifts;
 }
 
-unsigned int AssemblyCalculator::performLSL(){
+uint32_t AssemblyCalculator::performLSL(){
     int firstRegNum = firstReg.back() - '0';
     int numShifts = secondOperand;
 
     return getRegisterVal(firstRegNum) << numShifts;
 }
 
-unsigned int AssemblyCalculator::performORR(){
+uint32_t AssemblyCalculator::performORR(){
     int firstRegNum = firstReg.back() - '0';
     int secRegNum = secondReg.back() - '0';
 
     return getRegisterVal(firstRegNum) | getRegisterVal(secRegNum);
 }
 
-unsigned int AssemblyCalculator::performSUB(){
+uint32_t AssemblyCalculator::performSUB(){
     int firstRegNum = firstReg.back() - '0';
     int secRegNum = secondReg.back() - '0';
 
     return getRegisterVal(firstRegNum) - getRegisterVal(secRegNum);
 }
 
-unsigned int AssemblyCalculator::performXOR(){
+uint32_t AssemblyCalculator::performXOR(){
     int firstRegNum = firstReg.back() - '0';
     int secRegNum = secondReg.back() - '0';
 
@@ -284,15 +399,3 @@ void AssemblyCalculator::performMOV(){
     int registerNum = destReg.back() - '0';
     setRegisterVal(registerNum, secondOperand);
 }
-
-// // checking for overflow with performADD()
-// bool AssemblyCalculator::isThereOverFlow(){
-//     bool hasOverflowOccured = false;
-//     unsigned int sum = performADD();
-
-//     // if the sum result is less than either of the two operands (unsigned), then overflow has occured
-//     if (sum < firstOperand || sum < secondOperand){
-//         return hasOverflowOccured = true;
-//     }
-//     return hasOverflowOccured;
-// }

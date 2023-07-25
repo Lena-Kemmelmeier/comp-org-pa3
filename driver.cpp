@@ -44,34 +44,12 @@ void runOperations(int numCals, AssemblyCalculator* calcArr){
         else if(operation == "LSR" || operation == "LSRS" || operation == "LSL" || operation == "LSLS" || operation == "lsr" || operation == "lsrs" || operation == "lsl" || operation == "lsls"){
             cout << operation << " " << calcArr[i].getDestReg() << ", " << calcArr[i].getFirstReg() << ", #" << noshowbase << calcArr[i].getSecondOperand() << endl;
         }
+        else if(operation == "CMP" || operation == "cmp" || operation == "tst" || operation == "TST"){
+            cout << operation << " " << calcArr[i].getFirstReg() << ", " << calcArr[i].getSecondReg() << endl;
+        }
         else{
             cout << operation << " " << calcArr[i].getDestReg() << ", " << calcArr[i].getFirstReg() << ", " << calcArr[i].getSecondReg() << endl;
         }
-
-        // // if the instruction ends in an S, set the flags
-        // if (operation.back() == 'S'){
-
-        //     // get the MSB
-        //     while(result >= 16){
-        //         result = result/16;
-        //     }
-            
-        //     // set the N flag if the MSB is 1
-        //     if(result > 7){
-        //         calcArr[i].setN(1);
-        //     }
-        //     // set the Z flag if result is 0
-        //     else if(result == 0){
-        //         calcArr[i].setZ(1);
-        //     }
-        //     // set the C flag
-
-        //     // set the V flag
-        //     if(calcArr[i].getN() || calcArr[i].getC()){
-        //         calcArr[i].setV(1);
-        //     }
-            
-        //}
 
         calcArr[i].displayRegisterVals();
         calcArr[i].displayFlagVals();
@@ -82,7 +60,7 @@ int readInstructions(AssemblyCalculator* calcArr, string fileName){
     int numOperationsPerform = 0; //will increment as we read in from file - equal to the number of lines/instructions
     string operation, destR, firstR, secondR;
     char buffer; // allows us the skip over '#' and ',' in the txt
-    unsigned int oper2;
+    uint32_t oper2;
 
     ifstream file(fileName);
 
@@ -102,7 +80,12 @@ int readInstructions(AssemblyCalculator* calcArr, string fileName){
             destR = destR.substr(0, destR.size()-1); // take comma off of destR
             firstR = firstR.substr(0, firstR.size()-1); // take comma off of firstR
             calcArr[numOperationsPerform] = AssemblyCalculator(operation, destR, firstR, oper2);
-        } 
+        }
+        else if(operation == "CMP" || operation == "cmp" || operation == "tst" || operation == "TST"){
+            file >> firstR >> secondR;
+            firstR = firstR.substr(0, firstR.size()-1); // take comma off of firstR
+            calcArr[numOperationsPerform] = AssemblyCalculator(operation, firstR, secondR);
+        }
         else{
             file >> destR >> firstR >> secondR;
             destR = destR.substr(0, destR.size()-1); // take comma off of destR

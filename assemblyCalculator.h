@@ -11,21 +11,22 @@ using namespace std;
 class AssemblyCalculator{
     private:
         string currentOperation;
-        unsigned int secondOperand; // for immediate values
+        uint32_t secondOperand; // for immediate values
         string firstReg, secondReg, destReg;
-        unsigned int r0, r1, r2, r3, r4, r5, r6, r7;
+        uint32_t r0, r1, r2, r3, r4, r5, r6, r7;
         bool N, Z, C, V;
 
     public:
         //constructors
         AssemblyCalculator(); //default
         AssemblyCalculator(string newOper, string newDest, string firReg, string secReg); // we have two registers as operands
-        AssemblyCalculator(string newOper, string newDest, string firReg, unsigned int newOperand2); // when we have a shift
-        AssemblyCalculator(string newOper, string newDest, unsigned int newOperand2); // when we have a move operation
+        AssemblyCalculator(string newOper, string newDest, string firReg, uint32_t newOperand2); // when we have a shift
+        AssemblyCalculator(string newOper, string newDest, uint32_t newOperand2); // when we have a move operation
+        AssemblyCalculator(string newOper, string firReg, string secReg); // for cmp/tst
     
         // getters + setters
-        unsigned int getSecondOperand() const;
-        void setSecondOperand(const unsigned int newOperand2);
+        uint32_t getSecondOperand() const;
+        void setSecondOperand(const uint32_t newOperand2);
 
         void setCurrentOperation(const string newOper);
         string getCurrentOperation() const;
@@ -42,8 +43,8 @@ class AssemblyCalculator{
         void displayFlagVals();
 
         //registers
-        void setRegisterVal(int whichRegister, const unsigned int newVal);
-        unsigned int getRegisterVal(int whichRegister) const;
+        void setRegisterVal(int whichRegister, const uint32_t newVal);
+        uint32_t getRegisterVal(int whichRegister) const;
         string getDestReg() const;
         string getFirstReg() const;
         string getSecondReg() const;
@@ -56,16 +57,14 @@ class AssemblyCalculator{
         // calculating behaviors
         void performCurrentOperation(); // performs the current operation, ex: calls performLSR()
 
-        unsigned int performADD();
-        unsigned int performAND();
-        unsigned int performLSR();
-        unsigned int performLSL();
-        unsigned int performORR();
-        unsigned int performSUB();
-        unsigned int performXOR();
+        uint32_t performADD();
+        uint32_t performAND();
+        uint32_t performLSR();
+        uint32_t performLSL();
+        uint32_t performORR();
+        uint32_t performSUB();
+        uint32_t performXOR();
         void performMOV();
-
-        bool isThereOverFlow();
 };
 
 #endif
