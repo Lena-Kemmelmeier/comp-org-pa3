@@ -1,6 +1,4 @@
-# cs219-pa3
-
-# CS 219 Programming Assignment 3
+# Computer Organization Assignment 3
 
 Required Files: driver.cpp, assemblyCalculator.cpp, assemblyCalculator.h, Programming-Project-3.txt, makefile (for the assemblySim executable)
 
@@ -12,8 +10,6 @@ The program works by reading the data from Programming-Project-3.txt with ifstre
 We run and display the results of each operation with the runOperations() function, which displays the OPCODE, and any relevant registers/immediate operands. runOperations() calls the performCurrentOperation() method in assemblyCalculator, which runs the appropiate instruction currentOperation on each assemblyCalculator and sets the value of any affected registers (the destination register, if applicable) and any affected flags. The changes in the values for the registers and flags are preserved because of this function (and its use of the copy constructor) -- each new assemblyCalculator object is a copy of the previous one in the array after its calculations have been completed.
 
 Unlike part 2, we are dealing with OPCODE with registers and more flag values. I treated all values of operands and registers as uint_32, per the suggestion in the assignment description. To make the bitwise operations a bit easier for me to handle, I typecasted the hex values as unsigned integers and just converted them back to hex for when I had to display the results back to the user.
-
-If there are any issues with my running my program please let me know! My github link is https://github.com/Lena-Kemmelmeier/cs219-pa3 if for any reason that is easier to access.
 
 
 
